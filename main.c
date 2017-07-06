@@ -263,6 +263,7 @@ int scull_release(struct inode *inode, struct file *filp)
  */
 struct scull_qset *scull_follow(struct scull_dev *dev, int n)
 {
+	int count = 0;
 	struct scull_qset *qs = dev->data;
 
         /* Allocate first qset explicitly if need be */
@@ -281,6 +282,7 @@ struct scull_qset *scull_follow(struct scull_dev *dev, int n)
 				return NULL;  /* Never mind */
 			memset(qs->next, 0, sizeof(struct scull_qset));
 		}
+		printk(KERN_ALERT "Going to %dth scull_qset\n", ++count);
 		qs = qs->next;
 		continue;
 	}
@@ -321,6 +323,9 @@ ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
 	/* read only up to the end of this quantum */
 	if (count > quantum - q_pos)
 		count = quantum - q_pos;
+
+	printk(KERN_ALERT "Reading %d bytes from the %dth qset, starting on byte %d.\n",
+                           (int) count, s_pos, q_pos);
 
 	if (copy_to_user(buf, dptr->data[s_pos] + q_pos, count)) {
 		retval = -EFAULT;
@@ -370,6 +375,9 @@ ssize_t scull_write(struct file *filp, const char __user *buf, size_t count,
 	/* write only up to the end of this quantum */
 	if (count > quantum - q_pos)
 		count = quantum - q_pos;
+
+	printk(KERN_ALERT "Writing %d bytes from the %dth qset, starting on byte %d.\n",
+               (int) count, s_pos, q_pos);
 
 	if (copy_from_user(dptr->data[s_pos]+q_pos, buf, count)) {
 		retval = -EFAULT;
